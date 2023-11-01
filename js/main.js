@@ -20,7 +20,7 @@ setInterval(pro, 5000);
 
 
 
-
+//js/cursor event.js--------------------------------------------------------->
 $(window).mousemove(function (e) {
 	$(".ring").css(
 		"transform",
@@ -36,15 +36,23 @@ $(function port() {
 	$(window).scroll(function () {
 		let ws = $(this).scrollTop();
 		let a = $("#portfolio").offset().top;
-		// console.log(a)
+		let b = $("#about").offset().top;
+		console.log(b)
+		console.log(a)
 
-		if (ws > a) {
-			$("#portfolio").css("height", "150vh");
+		if ( ws > a && ws < b) {
+			$("#portfolio").css("height", "175vh");
 			$(".top").css("position", "fixed");
 			$(".slider-section").css("position","fixed")
 			// $(".slider-section").css({"position":"fixed","left":"30%"})
 		}
-		else {
+		else if(ws > b){
+			$("#portfolio").css("height", "100vh")
+			$("#portfolio").css("position", "relative")
+			$(".top").css("position", "absolute")
+			$(".slider-section").css("position", "absolute")
+		}
+		else if(ws < a-1){
 			$("#portfolio").css("height", "100vh")
 			$("#portfolio").css("position", "relative")
 			$(".top").css("position", "absolute")
@@ -154,7 +162,6 @@ function flip(e) {
 		ease: "sine.out",
 		absolute: true
 	});
-
 	lastClickedCard = e.target;
 }
 
@@ -169,13 +176,14 @@ $(function () {
 	$('.page').each(function (index) {
 		$(this).attr("data-index", win_h * index);
 	});
+	$('마지막페이지 클래스').attr("data-index", 마지막페이지높이값);
 
 
-	$('.page').on("mousewheel", function (e) {
+	$('.page','마지막페이지 클래스').on("mousewheel", function (e) {
 
 		var pagePos = parseInt($(this).attr("data-index"));
 		console.log(pagePos)
-
+        
 		if (e.originalEvent.wheelDelta >= 0) {
 			$("html,body").stop().animate({ scrollTop: pagePos - win_h });
 			return false;
@@ -185,3 +193,129 @@ $(function () {
 		}
 	});
 });
+
+
+
+
+
+
+// --마지막슬라이드-------------------------------------------
+var swiper2 = new Swiper(".swiper", {
+	effect: "coverflow",
+	grabCursor: true,
+	centeredSlides: true,
+	coverflowEffect: {
+	  rotate: 0,
+	  stretch: 0,
+	  depth: 100,
+	  modifier: 3,
+	  slideShadows: true
+	},
+	keyboard: {
+	  enabled: true
+	},
+	mousewheel: {
+	  thresholdDelta: 70
+	},
+	loop: true,
+	pagination: {
+	  el: ".swiper-pagination",
+	  clickable: true
+	}
+
+
+  });
+/*--------------------
+Vars
+--------------------*/
+let progress = 50
+let startX = 0
+let active = 0
+let isDown = false
+
+/*--------------------
+Contants
+--------------------*/
+const speedWheel = 0.02
+const speedDrag = -0.1
+
+/*--------------------
+Get Z
+--------------------*/
+const getZindex = (array, index) => (array.map((_, i) => (index === i) ? array.length : array.length - Math.abs(index - i)))
+
+/*--------------------
+Items
+--------------------*/
+const $items = document.querySelectorAll('.carousel-item')
+const $cursors = document.querySelectorAll('.cursor1')
+
+const displayItems = (item, index, active) => {
+  const zIndex = getZindex([...$items], active)[index]
+  item.style.setProperty('--zIndex', zIndex)
+  item.style.setProperty('--active', (index-active)/$items.length)
+}
+
+/*--------------------
+Animate
+--------------------*/
+const animat = () => {
+  progress = Math.max(0, Math.min(progress, 100))
+  active = Math.floor(progress/100*($items.length-1))
+  
+  $items.forEach((item, index) => displayItems(item, index, active))
+}
+animat()
+
+/*--------------------
+Click on Items
+--------------------*/
+$items.forEach((item, i) => {
+  item.addEventListener('click', () => {
+    progress = (i/$items.length) * 100 + 10
+    animat()
+  })
+})
+
+/*--------------------
+Handlers
+--------------------*/
+const handleWheel1 = e => {
+  const wheelProgress = e.deltaY * speedWheel
+  progress = progress + wheelProgress
+  animat()
+}
+
+const handleMouseMove1 = (e) => {
+  if (e.type === 'mousemove') {
+    $cursors.forEach(($cursor) => {
+      $cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`
+    })
+  }
+  if (!isDown) return
+  const x = e.clientX || (e.touches && e.touches[0].clientX) || 0
+  const mouseProgress = (x - startX) * speedDrag
+  progress = progress + mouseProgress
+  startX = x
+  animat()
+}
+
+const handleMouseDown1 = e => {
+  isDown = true
+  startX = e.clientX || (e.touches && e.touches[0].clientX) || 0
+}
+
+const handleMouseUp1 = () => {
+  isDown = false
+}
+
+/*--------------------
+Listeners
+--------------------*/
+document.addEventListener('mousewheel', handleWheel1)
+document.addEventListener('mousedown', handleMouseDown1)
+document.addEventListener('mousemove', handleMouseMove1)
+document.addEventListener('mouseup', handleMouseUp1)
+document.addEventListener('touchstart', handleMouseDown1)
+document.addEventListener('touchmove', handleMouseMove1)
+document.addEventListener('touchend', handleMouseUp1)
